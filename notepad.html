@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en-us">
 <head>
-    <title>Web Notepad</title>
+    <title>Notepad</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta name="description" content="Just a text area to type stuff and save it **locally**"/>
     <meta charset="UTF-8"/>
@@ -20,39 +20,80 @@
     <script>
         "use strict";
 
+        // Every how seconds should the text be saved locally?
+        const SAVE_FREQUENCY = 1;
+
+        // Every how many 'saves' should the text be saved to a "backup"?
+        const FREQUENCY_OF_BACKUP = 60;
+
+        // internal
+        let number = 0;
+
         function saveText() {
-            const data = document.getElementById('t').value;
-            window.localStorage.setItem("data", data);
+            const text = document.getElementById('text').value;
+            const textInStorage = window.localStorage.getItem("text");
+            if (textInStorage !== text) {
+                window.localStorage.setItem("text", text);
+            }
+            number++;
+            if (number % FREQUENCY_OF_BACKUP === 0) {
+                const textBackupInStorage = window.localStorage.getItem("textBackup");
+                if (text !== textBackupInStorage) {
+                    window.localStorage.setItem("textBackup", text);
+                }
+            }
         }
 
         function loadText() {
-            document.getElementById('t').value = window.localStorage.getItem("data");
+            document.getElementById('text').value = window.localStorage.getItem("text");
         }
 
-        function handleTab() {
-            document.getElementById('t').addEventListener('keydown', function (e) {
-                if (e.key === 'Tab') {
-                    e.preventDefault();
-                    const start = this.selectionStart;
-                    const end = this.selectionEnd;
-                    // set textarea value to: text before caret + tab + text after caret
-                    this.value = this.value.substring(0, start) + "\t" + this.value.substring(end);
-                    // put caret at right position again
-                    this.selectionStart = start + 1;
-                    this.selectionEnd = start + 1;
-                }
-            });
+        function loadTextFromBackup() {
+            const shouldOverwrite = window.confirm("Do you want to overwrite the current text with text retrieved from backup?");
+            if (shouldOverwrite) {
+                document.getElementById('text').value = window.localStorage.getItem("textBackup");
+            }
+        }
+
+        function handleTab(event) {
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                // set textarea value to: text before caret + tab + text after caret
+                this.value = this.value.substring(0, start) + "\t" + this.value.substring(end);
+                // put caret at right position again
+                this.selectionStart = start + 1;
+                this.selectionEnd = start + 1;
+            }
+        }
+
+        // Command+Shift+Z in Mac or Ctrl+Shift+Z in Windows
+        function handleModifierShiftZ(event) {
+            const isModifierPressed = event.metaKey || event.ctrlKey; // Both Command and Ctrl
+            const isShiftPressed = event.shiftKey;
+            const isZPressed = event.key === 'Z' || event.key === 'z';
+            // If (Command OR Ctrl) + Shift + Z combination is pressed
+            if (isModifierPressed && isShiftPressed && isZPressed) {
+                event.preventDefault();
+                loadTextFromBackup();
+            }
         }
 
         function initialize() {
-            handleTab();
+            // Handle some keys
+            document.getElementById('text').addEventListener('keydown', handleTab);
+            document.getElementById('text').addEventListener('keydown', handleModifierShiftZ);
+            // Load from local storage
             loadText();
-            window.setInterval(saveText, 500);
+            // Save contents every second
+            window.setInterval(saveText, 1000 * SAVE_FREQUENCY);
         }
 
+        document.addEventListener('DOMContentLoaded', initialize);
     </script>
 </head>
-<body onload="initialize();">
-<textarea id="t" autocomplete="off"></textarea>
+<body>
+<label for="text"></label><textarea id="text" autocomplete="off"></textarea>
 </body>
 </html>
