@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blank</title>
+    <script>
+        // Command+Shift+E in Mac or Ctrl+Shift+E in Windows
+        function handleModifierShiftE(event) {
+            const isModifierPressed = event.metaKey || event.ctrlKey; // Both Command and Ctrl
+            const isShiftPressed = event.shiftKey;
+            const isEPressed = event.key === 'E' || event.key === 'e';
+            // If (Command OR Ctrl) + Shift + E combination is pressed
+            if (isModifierPressed && isShiftPressed && isEPressed) {
+                event.preventDefault();
+                toggleEditMode();
+            }
+        }
+
+        function toggleEditMode() {
+            if (document.body.contentEditable === "true") {
+                document.body.contentEditable = "false";
+                console.info("Edit mode turned off");
+            } else {
+                document.body.contentEditable = "true";
+                console.info("Edit mode turned on");
+            }
+        }
+
+        function initialize() {
+            document.body.addEventListener('keydown', handleModifierShiftE);
+            toggleEditMode();
+        }
+
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</head>
+<body>
+Hello, this is an editable page.
+</body>
+</html>
